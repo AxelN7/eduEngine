@@ -10,9 +10,11 @@
 #include "MovementSystem.hpp"
 #include "PlayerControllerComponent.hpp"
 #include "PlayerControllerSystem.hpp"
+#include "AnimationComponent.hpp"
 #include "LinearVelocityComponent.hpp"
 #include "NPCController.hpp"
 #include "NPCControllerSystem.hpp"
+#include "AnimationSystem.hpp"
 
 bool Game::init()
 {
@@ -74,6 +76,7 @@ bool Game::init()
     entity_registry->emplace<MeshComponent>(playerEntity, characterMesh);
     entity_registry->emplace<PlayerControllerComponent>(playerEntity);
     entity_registry->emplace<LinearVelocityComponent>(playerEntity);
+    entity_registry->emplace<AnimationComponent>(playerEntity);
 
     auto npcEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
@@ -220,6 +223,8 @@ void Game::render(
     characterMesh->animate(2, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix3);
     character_aabb3 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix3);
+
+    AnimationSystem(time, *entity_registry);
 
     // End rendering pass
     drawcallCount = forwardRenderer->endPass();
