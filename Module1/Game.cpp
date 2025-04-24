@@ -4,6 +4,15 @@
 #include "imgui.h"
 #include "Log.hpp"
 #include "Game.hpp"
+#include "TransformComponent.hpp"
+#include "MeshComponent.hpp"
+#include "RenderSystem.hpp"
+#include "MovementSystem.hpp"
+#include "PlayerControllerComponent.hpp"
+#include "PlayerControllerSystem.hpp"
+#include "LinearVelocityComponent.hpp"
+#include "NPCController.hpp"
+#include "NPCControllerSystem.hpp"
 
 bool Game::init()
 {
@@ -55,6 +64,26 @@ bool Game::init()
     characterMesh->load("assets/Amy/walking.fbx", true);
     // Remove root motion
     characterMesh->removeTranslationKeys("mixamorig:Hips");
+
+    auto playerEntity = entity_registry->create();
+    entity_registry->emplace<TransformComponent>(playerEntity, TransformComponent{
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.03f, 0.03f, 0.03f),
+        glm::quat(glm::vec3(0.0f))
+        });
+    entity_registry->emplace<MeshComponent>(playerEntity, characterMesh);
+    entity_registry->emplace<PlayerControllerComponent>(playerEntity);
+    entity_registry->emplace<LinearVelocityComponent>(playerEntity);
+
+    auto npcEntity = entity_registry->create();
+    entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
+        glm::vec3(3.0f, 0.0f, 0.0f),
+        glm::vec3(0.01f, 0.01f, 0.01f),
+        glm::quat(glm::vec3(0.0f))
+        });
+    entity_registry->emplace<MeshComponent>(npcEntity, horseMesh);
+    entity_registry->emplace<NPCController>(npcEntity);
+    entity_registry->emplace<LinearVelocityComponent>(npcEntity);
 #endif
 #if 0
     // Eve 5.0.1 PACK FBX
@@ -90,14 +119,18 @@ void Game::update(
 
     updatePlayer(deltaTime, input);
 
+    PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  //Controller for the player
+    NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
+    MovementSystem(deltaTime, *entity_registry);    //Movement for entities
+
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
         glm::vec4(100.0f, 100.0f, 100.0f, 1.0f));
 
-    characterWorldMatrix1 = glm_aux::TRS(
+    /*characterWorldMatrix1 = glm_aux::TRS(
         player.pos,
         0.0f, { 0, 1, 0 },
-        { 0.03f, 0.03f, 0.03f });
+        { 0.03f, 0.03f, 0.03f });*/
 
     characterWorldMatrix2 = glm_aux::TRS(
         { -3, 0, 0 },
@@ -125,6 +158,20 @@ void Game::update(
         eeng::Log("Picking ray origin = %s, dir = %s",
             glm_aux::to_string(ray.origin).c_str(),
             glm_aux::to_string(ray.dir).c_str());
+    }
+
+    //Make the camera follow the player
+    auto view = entity_registry->view<TransformComponent, PlayerControllerComponent>();
+    for (auto entity : view)
+    {
+        const auto& transform = view.get<TransformComponent>(entity);
+
+        camera.lookAt = transform.position;
+        const glm::vec4 offset = glm_aux::R(camera.yaw, camera.pitch) * glm::vec4(0, 0, camera.distance, 1);
+        camera.pos = transform.position + glm::vec3(offset);
+
+        player.viewRay = glm_aux::Ray{ transform.position + glm::vec3(0, 2, 0), player.fwd };
+        break;
     }
 }
 
@@ -159,9 +206,10 @@ void Game::render(
     horse_aabb = horseMesh->m_model_aabb.post_transform(horseWorldMatrix);
 
     // Character, instance 1
-    characterMesh->animate(characterAnimIndex, time * characterAnimSpeed);
+    /*characterMesh->animate(characterAnimIndex, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix1);
-    character_aabb1 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix1);
+    character_aabb1 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix1);*/
+    RenderSystem(*entity_registry, *forwardRenderer);
 
     // Character, instance 2
     characterMesh->animate(1, time * characterAnimSpeed);
@@ -172,6 +220,8 @@ void Game::render(
     characterMesh->animate(2, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix3);
     character_aabb3 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix3);
+
+
 
     // End rendering pass
     drawcallCount = forwardRenderer->endPass();
@@ -226,6 +276,33 @@ void Game::render(
 void Game::renderUI()
 {
     ImGui::Begin("Game Info");
+
+    ImGui::Text("Game time: %.1f seconds", ImGui::GetTime());   //Show the game time
+
+    auto playerView = entity_registry->view<TransformComponent, PlayerControllerComponent>();
+    for (auto entity : playerView)
+    {
+        auto& playerTransform = playerView.get<TransformComponent>(entity);
+        auto& playerController = playerView.get<PlayerControllerComponent>(entity);
+
+        float playerScale = playerTransform.scalingVector.x;
+        if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))      //Adjust player scale
+        {
+            playerTransform.scalingVector = glm::vec3(playerScale);
+        }
+
+        ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);   //Adjust player movement speed
+        break;
+    }
+
+    auto npcView = entity_registry->view<NPCController>();
+    for (auto entity : npcView)
+    {
+        auto& npcController = npcView.get<NPCController>(entity);
+
+        const char* behaviours[] = { "Random", "Follow player" };
+        ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  //Adjust npc behaviour
+    }
 
     ImGui::Text("Drawcall count %i", drawcallCount);
 
@@ -328,28 +405,7 @@ void Game::updatePlayer(
     float deltaTime,
     InputManagerPtr input)
 {
-    // Fetch keys relevant for player movement
-    using Key = eeng::InputManager::Key;
-    bool W = input->IsKeyPressed(Key::W);
-    bool A = input->IsKeyPressed(Key::A);
-    bool S = input->IsKeyPressed(Key::S);
-    bool D = input->IsKeyPressed(Key::D);
-
     // Compute vectors in the local space of the player
     player.fwd = glm::vec3(glm_aux::R(camera.yaw, glm_aux::vec3_010) * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
     player.right = glm::cross(player.fwd, glm_aux::vec3_010);
-
-    // Compute the total movement as a 3D vector
-    auto movement =
-        player.fwd * player.velocity * deltaTime * ((W ? 1.0f : 0.0f) + (S ? -1.0f : 0.0f)) +
-        player.right * player.velocity * deltaTime * ((A ? -1.0f : 0.0f) + (D ? 1.0f : 0.0f));
-
-    // Update player position and forward view ray
-    player.pos += movement;
-    player.viewRay = glm_aux::Ray{ player.pos + glm::vec3(0.0f, 2.0f, 0.0f), player.fwd };
-
-    // Update camera to track the player
-    camera.lookAt += movement;
-    camera.pos += movement;
-
 }
