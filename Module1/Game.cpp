@@ -123,6 +123,44 @@ void Game::update(
     NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
     MovementSystem(deltaTime, *entity_registry);    //Movement for entities
 
+    using Key = eeng::InputManager::Key;
+    if (input->IsKeyPressed(Key::E))
+    {
+        drawSkeleton = true;
+    }
+    else if (input->IsKeyPressed(Key::Q))
+    {
+        drawSkeleton = false;
+    }
+
+    /*auto playerView = entity_registry->view<LinearVelocityComponent, MeshComponent, PlayerControllerComponent>();
+    for (auto entity : playerView)
+    {
+        auto& velocity = playerView.get<LinearVelocityComponent>(entity);
+        const auto& mesh = playerView.get<MeshComponent>(entity);
+        
+        time0 += deltaTime;
+        time1 += deltaTime;
+
+        if (glm::length(velocity.velocity.x) > 0 || glm::length(velocity.velocity.z) > 0)
+        {
+            blendTimer += deltaTime;
+            blendFactor = glm::clamp(blendTimer / blendDuration, 0.0f, 1.0f);
+        }
+        else
+        {
+            blendTimer -= deltaTime;
+            blendFactor = glm::clamp(blendTimer / blendDuration, 0.0f, 1.0f);
+        }
+
+        if (auto meshPointer = mesh.reference.lock())
+        {
+            meshPointer->animateBlend(1, 2, time0, time1, blendFactor, eeng::AnmationTimeFormat::RealTime, eeng::AnmationTimeFormat::RealTime);
+        }
+    }*/
+    
+    //characterMesh->animateBlend(1, 2, time0, time1, blendFactor, eeng::AnmationTimeFormat::RealTime, eeng::AnmationTimeFormat::RealTime);
+
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
         glm::vec4(100.0f, 100.0f, 100.0f, 1.0f));
@@ -217,14 +255,44 @@ void Game::render(
     character_aabb2 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix2);
 
     // Character, instance 3
-    characterMesh->animate(2, time * characterAnimSpeed);
+    //characterMesh->animate(2, time * characterAnimSpeed);
+    characterMesh->animateBlend(1, 2, 0.0f, 1.0f, blendFactor, eeng::AnmationTimeFormat::RealTime, eeng::AnmationTimeFormat::RealTime);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix3);
     character_aabb3 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix3);
 
-
-
     // End rendering pass
     drawcallCount = forwardRenderer->endPass();
+
+    float axisLen = 25.0f;
+    
+    // Draw bone visualization
+    if (drawSkeleton)
+    {
+        for (int i = 0; i < characterMesh->boneMatrices.size(); ++i)
+        {
+            auto IBinverse = glm::inverse(characterMesh->m_bones[i].inversebind_tfm);
+
+            glm::mat4 global = characterWorldMatrix3 * characterMesh->boneMatrices[i] * IBinverse;
+
+            glm::vec3 pos = glm::vec3(global[3]);
+            glm::vec3 right = glm::vec3(global[0]); //X
+            glm::vec3 up = glm::vec3(global[1]);    //Y
+            glm::vec3 fwd = glm::vec3(global[2]);   //Z
+
+            shapeRenderer->push_states(ShapeRendering::Color4u::Red);
+            shapeRenderer->push_line(pos, pos + axisLen * right);
+
+            shapeRenderer->push_states(ShapeRendering::Color4u::Green);
+            shapeRenderer->push_line(pos, pos + axisLen * up);
+
+            shapeRenderer->push_states(ShapeRendering::Color4u::Blue);
+            shapeRenderer->push_line(pos, pos + axisLen * fwd);
+
+            shapeRenderer->pop_states<ShapeRendering::Color4u>();
+            shapeRenderer->pop_states<ShapeRendering::Color4u>();
+            shapeRenderer->pop_states<ShapeRendering::Color4u>();
+        }
+    }
 
     // Draw player view ray
     if (player.viewRay)
@@ -303,6 +371,8 @@ void Game::renderUI()
         const char* behaviours[] = { "Random", "Follow player" };
         ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  //Adjust npc behaviour
     }
+
+    ImGui::SliderFloat("Blend factor", &blendFactor, 0.0f, 1.0f);   //Control blend factor in animation blend
 
     ImGui::Text("Drawcall count %i", drawcallCount);
 
