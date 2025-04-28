@@ -4,4 +4,5 @@
 struct PlayerControllerComponent
 {
 	float movementSpeed = 4.0f;
+	bool isMoving = false;
 };

@@ -116,15 +116,6 @@ private:
     // Toggle bone visualization
     bool drawSkeleton = false;
 
-    // Blend factor
-    float blendFactor = 0.0f;
-
-    // Update blending
-    float time0 = 0.0f;
-    float time1 = 0.0f;
-    float blendTimer = 0.0f;
-    const float blendDuration = 2.0f;
-
     /// @brief Placeholder system for updating the camera position based on inputs
     /// @param input Input from mouse, keyboard and controllers
     void updateCamera(
