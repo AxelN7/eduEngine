@@ -15,6 +15,8 @@
 #include "NPCControllerSystem.hpp"
 #include "AnimationComponent.hpp"
 #include "AnimationSystem.hpp"
+#include "AnimState.hpp"
+#include "FSM.hpp"
 
 bool Game::init()
 {
@@ -125,7 +127,8 @@ void Game::update(
     PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  //Controller for the player
     NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
     MovementSystem(deltaTime, *entity_registry);    //Movement for entities
-    AnimationSystem(deltaTime, *entity_registry);   //Animation blending
+    //AnimationSystem(deltaTime, *entity_registry);   //Animation blending
+    BasicFSM(deltaTime, *entity_registry);      //Basic FSM for animation blending
 
     using Key = eeng::InputManager::Key;
     if (input->IsKeyPressed(Key::E))        //Toggle bone visualization
@@ -228,7 +231,14 @@ void Game::render(
     {
         auto& animation = view.get<AnimationComponent>(entity);
 
-        characterMesh->animateBlend(1, 2, animation.time0, animation.time1, animation.blendFactor);     //Animation blending between Idle and Walk
+        int idleAnimation = 1;
+        int walkAnimation = 2;
+
+        int fromAnimation = animation.currentState == AnimState::Idle ? idleAnimation : walkAnimation;
+        int toAnimation = animation.targetState == AnimState::Idle ? idleAnimation : walkAnimation;
+
+        characterMesh->animateBlend(fromAnimation, toAnimation, animation.time0, animation.time1, animation.blendFactor);       //Animation blending between Idle and Walk <-- Basic FSM
+        //characterMesh->animateBlend(idleAnimation, walkAnimation, animation.time0, animation.time1, animation.blendFactor);     //Animation blending between Idle and Walk <-- AnimationSystem
     }
     RenderSystem(*entity_registry, *forwardRenderer);
 
@@ -360,6 +370,16 @@ void Game::renderUI()
         auto& animation = animateView.get<AnimationComponent>(entity);
 
         ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);     //Control blend factor in animation blend
+
+        const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk" };
+        if (animation.currentState == AnimState::Idle)
+        {
+            ImGui::Text(stateText[0]);  //Show Idle state
+        }
+        else
+        {
+            ImGui::Text(stateText[1]);  //Show Walk state
+        }
     }
 
     ImGui::Text("Drawcall count %i", drawcallCount);

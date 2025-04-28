@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include "AnimState.hpp"
 
 struct AnimationComponent
 {
@@ -8,4 +9,6 @@ struct AnimationComponent
 	float blendTimer = 0.0f;
 	float blendFactor = 0.0f;
 	float blendDuration = 0.5f;
+	AnimState currentState = AnimState::Idle;
+	AnimState targetState = AnimState::Idle;
 };
