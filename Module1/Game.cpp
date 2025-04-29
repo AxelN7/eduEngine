@@ -66,6 +66,7 @@ bool Game::init()
     characterMesh->load("assets/Amy/Ch46_nonPBR.fbx");
     characterMesh->load("assets/Amy/idle.fbx", true);
     characterMesh->load("assets/Amy/walking.fbx", true);
+    characterMesh->load("assets/Amy/jump.fbx", true);
     // Remove root motion
     characterMesh->removeTranslationKeys("mixamorig:Hips");
 
@@ -128,17 +129,7 @@ void Game::update(
     NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
     MovementSystem(deltaTime, *entity_registry);    //Movement for entities
     //AnimationSystem(deltaTime, *entity_registry);   //Animation blending
-    BasicFSM(deltaTime, *entity_registry);      //Basic FSM for animation blending
-
-    using Key = eeng::InputManager::Key;
-    if (input->IsKeyPressed(Key::E))        //Toggle bone visualization
-    {
-        drawSkeleton = true;
-    }
-    else if (input->IsKeyPressed(Key::Q))
-    {
-        drawSkeleton = false;
-    }
+    BasicFSM(deltaTime, input, *entity_registry);      //Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
@@ -233,12 +224,16 @@ void Game::render(
 
         int idleAnimation = 1;
         int walkAnimation = 2;
+        int jumpAnimation = 3;
 
-        int fromAnimation = animation.currentState == AnimState::Idle ? idleAnimation : walkAnimation;
-        int toAnimation = animation.targetState == AnimState::Idle ? idleAnimation : walkAnimation;
-
-        characterMesh->animateBlend(fromAnimation, toAnimation, animation.time0, animation.time1, animation.blendFactor);       //Animation blending between Idle and Walk <-- Basic FSM
-        //characterMesh->animateBlend(idleAnimation, walkAnimation, animation.time0, animation.time1, animation.blendFactor);     //Animation blending between Idle and Walk <-- AnimationSystem
+        if (animation.currentState == AnimState::Jump)
+        {
+            characterMesh->animate(jumpAnimation, animation.jumpTime);
+        }
+        else
+        {
+            characterMesh->animateBlend(idleAnimation, walkAnimation, animation.time0, animation.time1, animation.blendFactor);     //Animation blending between Idle and Walk <-- AnimationSystem and Basic FSM
+        }
     }
     RenderSystem(*entity_registry, *forwardRenderer);
 
@@ -263,7 +258,7 @@ void Game::render(
         for (int i = 0; i < characterMesh->boneMatrices.size(); ++i)
         {
             auto IBinverse = glm::inverse(characterMesh->m_bones[i].inversebind_tfm);
-
+            
             glm::mat4 global = characterWorldMatrix3 * characterMesh->boneMatrices[i] * IBinverse;
 
             glm::vec3 pos = glm::vec3(global[3]);
@@ -371,15 +366,28 @@ void Game::renderUI()
 
         ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);     //Control blend factor in animation blend
 
-        const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk" };
-        if (animation.currentState == AnimState::Idle)
+        const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
+        if (animation.currentState == AnimState::Jump)
         {
-            ImGui::Text(stateText[0]);  //Show Idle state
+            ImGui::Text(stateText[2]);  //Show Idle state
         }
-        else
+        if (animation.currentState == AnimState::Walk)
         {
             ImGui::Text(stateText[1]);  //Show Walk state
         }
+        if (animation.currentState == AnimState::Idle)
+        {
+            ImGui::Text(stateText[0]);  //Show Jump state
+        }
+    }
+    
+    if (ImGui::Button("Bone gizmo ON"))     //Toggle bone visualization
+    {
+        drawSkeleton = true;
+    }
+    if (ImGui::Button("Bone gizmo OFF"))
+    {
+        drawSkeleton = false;
     }
 
     ImGui::Text("Drawcall count %i", drawcallCount);
