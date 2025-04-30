@@ -7,10 +7,9 @@
 #include "PlayerControllerComponent.hpp"
 #include "InputManager.hpp"
 
-void BasicFSM(float dt, InputManagerPtr input, entt::registry& registry)
+void FSM(float dt, InputManagerPtr input, entt::registry& registry)
 {
 	using Key = eeng::InputManager::Key;
-	bool isMoving = input->IsKeyPressed(Key::W) || input->IsKeyPressed(Key::S) || input->IsKeyPressed(Key::A) || input->IsKeyPressed(Key::D);
 
 	auto view = registry.view<AnimationComponent, PlayerControllerComponent>();
 
@@ -19,34 +18,54 @@ void BasicFSM(float dt, InputManagerPtr input, entt::registry& registry)
 		auto& animation = view.get<AnimationComponent>(entity);
 		auto& playerController = view.get<PlayerControllerComponent>(entity);
 
-		animation.time0 += dt;
-		animation.time1 += dt;
+		animation.idleTime += animation.animationSpeed * dt;
+		animation.walkTime += animation.animationSpeed * dt;
 
 		if (input->IsKeyPressed(Key::Space) && animation.currentState != AnimState::Jump)	//Check if jump
 		{
-			animation.previousState = animation.currentState;	//Save current state
-			animation.currentState = AnimState::Jump;
-			animation.jumpTime = 0.0f;
+			animation.previousState = animation.currentState;	//Save current state in previous state
+			animation.currentState = AnimState::Jump;	//Update current state
+			animation.jumpTimer = 0.0f;
+			animation.jumpBlendTimer = 0.0f;
+			animation.jumpBlendFactor = 0.0f;
+			animation.jumpBlendOut = false;
 		}
 
 		if (animation.currentState == AnimState::Jump)
 		{
-			animation.jumpTime += dt;
+			animation.jumpTimer += animation.animationSpeed * dt;
 
-			if (animation.jumpTime >= animation.jumpDuration)
+			if (!animation.jumpBlendOut)	//Blend up/in
 			{
-				animation.currentState = animation.previousState;
+				animation.jumpBlendTimer += dt;
+				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.jumbBlendDuration, 0.0f, 1.0f);
+
+				if (animation.jumpTimer >= animation.jumpDuration * 0.5f)	//Start blend down/out halfway
+				{
+					animation.jumpBlendOut = true;
+					animation.jumpBlendTimer = animation.jumbBlendDuration;
+				}
+			}
+			else   //Blend down/out
+			{
+				animation.jumpBlendTimer -= dt;
+				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.jumbBlendDuration, 0.0f, 1.0f);
+
+				if (animation.jumpBlendFactor <= 0.0f)	//Go back to previous state
+				{
+					animation.currentState = animation.previousState;
+				}
 			}
 		}
 		else   //Handle blending between Idle and Walk
 		{
-			animation.targetState = isMoving ? AnimState::Walk : AnimState::Idle;
+			animation.targetState = playerController.isMoving ? AnimState::Walk : AnimState::Idle;
 
-			if (animation.targetState == AnimState::Walk)
+			if (animation.targetState == AnimState::Walk)	//Blend up when transitioning to walk
 			{
 				animation.blendTimer += dt;
 			}
-			else
+			else   //Blend down when transitioning to idle
 			{
 				animation.blendTimer -= dt;
 			}
@@ -54,11 +73,7 @@ void BasicFSM(float dt, InputManagerPtr input, entt::registry& registry)
 			animation.blendTimer = glm::clamp(animation.blendTimer, 0.0f, animation.blendDuration);
 			animation.blendFactor = animation.blendTimer / animation.blendDuration;
 
-			if (animation.blendFactor >= 1.0f - 0.01f)
-			{
-				animation.currentState = animation.targetState;
-			}
-			else if (animation.blendFactor <= 0.01f)
+			if (animation.blendFactor >= 1.0f - 0.01f || animation.blendFactor <= 0.01f)	//Update current state when target state reached
 			{
 				animation.currentState = animation.targetState;
 			}

@@ -129,7 +129,7 @@ void Game::update(
     NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
     MovementSystem(deltaTime, *entity_registry);    //Movement for entities
     //AnimationSystem(deltaTime, *entity_registry);   //Animation blending
-    BasicFSM(deltaTime, input, *entity_registry);      //Basic FSM for animation blending
+    FSM(deltaTime, input, *entity_registry);      //Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
@@ -228,58 +228,30 @@ void Game::render(
 
         if (animation.currentState == AnimState::Jump)
         {
-            characterMesh->animate(jumpAnimation, animation.jumpTime);
+            int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;     //Set previous animation clip
+            float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  //Set previous animation time
+
+            characterMesh->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);    //Animation blending between Idle/Walk and Jump
         }
         else
         {
-            characterMesh->animateBlend(idleAnimation, walkAnimation, animation.time0, animation.time1, animation.blendFactor);     //Animation blending between Idle and Walk <-- AnimationSystem and Basic FSM
+            characterMesh->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);     //Animation blending between Idle and Walk
         }
     }
-    RenderSystem(*entity_registry, *forwardRenderer);
+    RenderSystem(*entity_registry, *forwardRenderer, shapeRenderer);
 
     // Character, instance 2
-    characterMesh->animate(1, time * characterAnimSpeed);
+    characterMesh->animate(3, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix2);
     character_aabb2 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix2);
 
     // Character, instance 3
-    characterMesh->animate(2, time * characterAnimSpeed);
+    characterMesh->animate(0, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix3);
     character_aabb3 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix3);
 
     // End rendering pass
     drawcallCount = forwardRenderer->endPass();
-
-    float axisLen = 25.0f;
-    
-    // Draw bone visualization
-    if (drawSkeleton)
-    {
-        for (int i = 0; i < characterMesh->boneMatrices.size(); ++i)
-        {
-            auto IBinverse = glm::inverse(characterMesh->m_bones[i].inversebind_tfm);
-            
-            glm::mat4 global = characterWorldMatrix3 * characterMesh->boneMatrices[i] * IBinverse;
-
-            glm::vec3 pos = glm::vec3(global[3]);
-            glm::vec3 right = glm::vec3(global[0]); //X
-            glm::vec3 up = glm::vec3(global[1]);    //Y
-            glm::vec3 fwd = glm::vec3(global[2]);   //Z
-
-            shapeRenderer->push_states(ShapeRendering::Color4u::Red);
-            shapeRenderer->push_line(pos, pos + axisLen * right);
-
-            shapeRenderer->push_states(ShapeRendering::Color4u::Green);
-            shapeRenderer->push_line(pos, pos + axisLen * up);
-
-            shapeRenderer->push_states(ShapeRendering::Color4u::Blue);
-            shapeRenderer->push_line(pos, pos + axisLen * fwd);
-
-            shapeRenderer->pop_states<ShapeRendering::Color4u>();
-            shapeRenderer->pop_states<ShapeRendering::Color4u>();
-            shapeRenderer->pop_states<ShapeRendering::Color4u>();
-        }
-    }
 
     // Draw player view ray
     if (player.viewRay)
@@ -365,6 +337,7 @@ void Game::renderUI()
         auto& animation = animateView.get<AnimationComponent>(entity);
 
         ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);     //Control blend factor in animation blend
+        ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);    //Control jump blend factor in animation blend
 
         const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
         if (animation.currentState == AnimState::Jump)
@@ -381,13 +354,22 @@ void Game::renderUI()
         }
     }
     
-    if (ImGui::Button("Bone gizmo ON"))     //Toggle bone visualization
+    auto renderView = entity_registry->view<MeshComponent, PlayerControllerComponent>();
+    for (auto entity : renderView)
     {
-        drawSkeleton = true;
-    }
-    if (ImGui::Button("Bone gizmo OFF"))
-    {
-        drawSkeleton = false;
+        auto& mesh = renderView.get<MeshComponent>(entity);
+
+        if (auto meshPointer = mesh.reference.lock())
+        {
+            if (ImGui::Button("Bone gizmo ON"))     //Toggle bone visualization
+            {
+                mesh.drawSkeleton = true;
+            }
+            if (ImGui::Button("Bone gizmo OFF"))
+            {
+                mesh.drawSkeleton = false;
+            }
+        }
     }
 
     ImGui::Text("Drawcall count %i", drawcallCount);

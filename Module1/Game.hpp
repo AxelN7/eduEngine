@@ -113,9 +113,6 @@ private:
     // Stats
     int drawcallCount = 0;
 
-    // Toggle bone visualization
-    bool drawSkeleton = false;
-
     /// @brief Placeholder system for updating the camera position based on inputs
     /// @param input Input from mouse, keyboard and controllers
     void updateCamera(

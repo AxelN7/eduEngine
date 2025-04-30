@@ -13,14 +13,14 @@ void AnimationSystem(float dt, entt::registry& registry)
 		auto& animation = view.get<AnimationComponent>(entity);
 		auto& playerController = view.get<PlayerControllerComponent>(entity);
 
-		animation.time0 += dt;
-		animation.time1 += dt;
+		animation.idleTime += animation.animationSpeed * dt;
+		animation.walkTime += animation.animationSpeed * dt;
 
-		if (playerController.isMoving)
+		if (playerController.isMoving)	//Blend up
 		{
 			animation.blendTimer += dt;
 		}
-		else
+		else  //Blend down
 		{
 			animation.blendTimer -= dt;
 		}
