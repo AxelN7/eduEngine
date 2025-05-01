@@ -38,18 +38,18 @@ void FSM(float dt, InputManagerPtr input, entt::registry& registry)
 			if (!animation.jumpBlendOut)	//Blend up/in
 			{
 				animation.jumpBlendTimer += dt;
-				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.jumbBlendDuration, 0.0f, 1.0f);
+				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.blendDuration, 0.0f, 1.0f);
 
 				if (animation.jumpTimer >= animation.jumpDuration * 0.5f)	//Start blend down/out halfway
 				{
 					animation.jumpBlendOut = true;
-					animation.jumpBlendTimer = animation.jumbBlendDuration;
+					animation.jumpBlendTimer = animation.blendDuration;
 				}
 			}
 			else   //Blend down/out
 			{
 				animation.jumpBlendTimer -= dt;
-				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.jumbBlendDuration, 0.0f, 1.0f);
+				animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.blendDuration, 0.0f, 1.0f);
 
 				if (animation.jumpBlendFactor <= 0.0f)	//Go back to previous state
 				{

@@ -13,7 +13,6 @@ struct AnimationComponent
 	float jumpTimer = 0.0f;		//Timer on Jump animation
 	float jumpDuration = 2.2f;	//Total animation time for Jump
 	float jumpBlendTimer = 0.0f; //Timer on blend between 0.0 and jumpBlendDuration (Idle/Walk and Jump)
-	float jumbBlendDuration = 0.5f;	//Time to fully blend
 	float jumpBlendFactor = 0.0f;
 	bool jumpBlendOut = false;	//Check if blending out
 
