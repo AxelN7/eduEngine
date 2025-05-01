@@ -15,6 +15,7 @@
 #include "NPCControllerSystem.hpp"
 #include "AnimationComponent.hpp"
 #include "AnimationSystem.hpp"
+#include "AnimationLogicSystem.hpp"
 #include "AnimState.hpp"
 #include "FSM.hpp"
 
@@ -128,7 +129,7 @@ void Game::update(
     PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  //Controller for the player
     NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
     MovementSystem(deltaTime, *entity_registry);    //Movement for entities
-    //AnimationSystem(deltaTime, *entity_registry);   //Animation blending
+    //AnimationLogicSystem(deltaTime, *entity_registry);   //Animation blending
     FSM(deltaTime, input, *entity_registry);      //Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(
@@ -217,27 +218,7 @@ void Game::render(
     /*characterMesh->animate(characterAnimIndex, time * characterAnimSpeed);
     forwardRenderer->renderMesh(characterMesh, characterWorldMatrix1);
     character_aabb1 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix1);*/
-    auto view = entity_registry->view<AnimationComponent, PlayerControllerComponent>();
-    for (auto entity : view)
-    {
-        auto& animation = view.get<AnimationComponent>(entity);
-
-        int idleAnimation = 1;
-        int walkAnimation = 2;
-        int jumpAnimation = 3;
-
-        if (animation.currentState == AnimState::Jump)
-        {
-            int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;     //Set previous animation clip
-            float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  //Set previous animation time
-
-            characterMesh->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);    //Animation blending between Idle/Walk and Jump
-        }
-        else
-        {
-            characterMesh->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);     //Animation blending between Idle and Walk
-        }
-    }
+    AnimationSystem(*entity_registry);
     RenderSystem(*entity_registry, *forwardRenderer, shapeRenderer);
 
     // Character, instance 2

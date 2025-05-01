@@ -2,30 +2,33 @@
 #include <glm/glm.hpp>
 #include <entt/entt.hpp>
 #include "AnimationComponent.hpp"
-#include "PlayerControllerComponent.hpp"
+#include "MeshComponent.hpp"
 
-void AnimationSystem(float dt, entt::registry& registry)
+void AnimationSystem(entt::registry& registry)
 {
-	auto view = registry.view<AnimationComponent, PlayerControllerComponent>();
+    auto view = registry.view<AnimationComponent, MeshComponent>();
+    for (auto entity : view)
+    {
+        auto& animation = view.get<AnimationComponent>(entity);
+        const auto& mesh = view.get<MeshComponent>(entity);
 
-	for (auto entity : view)
-	{
-		auto& animation = view.get<AnimationComponent>(entity);
-		auto& playerController = view.get<PlayerControllerComponent>(entity);
+        int idleAnimation = 1;
+        int walkAnimation = 2;
+        int jumpAnimation = 3;
 
-		animation.idleTime += animation.animationSpeed * dt;
-		animation.walkTime += animation.animationSpeed * dt;
+        if (auto meshPointer = mesh.reference.lock())
+        {
+            if (animation.currentState == AnimState::Jump)
+            {
+                int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;     //Set previous animation clip
+                float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  //Set previous animation time
 
-		if (playerController.isMoving)	//Blend up
-		{
-			animation.blendTimer += dt;
-		}
-		else  //Blend down
-		{
-			animation.blendTimer -= dt;
-		}
-
-		animation.blendTimer = glm::clamp(animation.blendTimer, 0.0f, animation.blendDuration);
-		animation.blendFactor = animation.blendTimer / animation.blendDuration;
-	}
+                meshPointer->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);    //Animation blending between Idle/Walk and Jump
+            }
+            else
+            {
+                meshPointer->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);     //Animation blending between Idle and Walk
+            }
+        }
+    }
 }
