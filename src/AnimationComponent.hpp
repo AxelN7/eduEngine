@@ -4,21 +4,21 @@
 
 struct AnimationComponent
 {
-	float idleTime = 0.0f;		//Animation time for Idle
-	float walkTime = 0.0f;		//Animation time for Walk
-	float blendTimer = 0.0f;	//Timer on blend between 0.0 and blendDuration (Idle and Walk)
-	float blendFactor = 0.0f;	
-	float blendDuration = 0.5f;	//Time to fully blend
+	float idleTime = 0.0f;							// Time for the Idle animation clip
+	float walkTime = 0.0f;							// Time for the Walk animation clip
+	float blendTimer = 0.0f;						// Progress timer for the blend
+	float blendFactor = 0.0f;						// Current blend factor
+	float blendDuration = 0.5f;						// Duration for a full blend
 
-	float jumpTimer = 0.0f;		//Timer on Jump animation
-	float jumpDuration = 2.2f;	//Total animation time for Jump
-	float jumpBlendTimer = 0.0f; //Timer on blend between 0.0 and jumpBlendDuration (Idle/Walk and Jump)
-	float jumpBlendFactor = 0.0f;
-	bool jumpBlendOut = false;	//Check if blending out
+	float jumpTimer = 0.0f;							// Time elapsed in the Jump animation
+	float jumpDuration = 2.2f;						// Total duration of the Jump clip
+	float jumpBlendTimer = 0.0f;					// Progress of Jump blend
+	float jumpBlendFactor = 0.0f;					// Current Jump blend factor
+	bool jumpBlendOut = false;						// Indicates if Jump is blending out
 
-	float animationSpeed = 1.0f;
+	float animationSpeed = 1.0f;					// Speed multiplier for animation
 
-	AnimState currentState = AnimState::Idle;
-	AnimState targetState = AnimState::Idle;
-	AnimState previousState = AnimState::Idle;
+	AnimState currentState = AnimState::Idle;		// Current animation state
+	AnimState targetState = AnimState::Idle;		// State to transition to
+	AnimState previousState = AnimState::Idle;		// Previous animation state
 };

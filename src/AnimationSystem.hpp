@@ -12,22 +12,22 @@ void AnimationSystem(entt::registry& registry)
         auto& animation = view.get<AnimationComponent>(entity);
         const auto& mesh = view.get<MeshComponent>(entity);
 
-        int idleAnimation = 1;
-        int walkAnimation = 2;
-        int jumpAnimation = 3;
+        int idleAnimation = 1;      // Clip index for Idle
+        int walkAnimation = 2;      // Clip index for Walk
+        int jumpAnimation = 3;      // Clip index for Jump
 
         if (auto meshPointer = mesh.reference.lock())
         {
-            if (animation.currentState == AnimState::Jump)
+            if (animation.currentState == AnimState::Jump)          // Animation blending between Idle/Walk and Jump
             {
-                int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;     //Set previous animation clip
-                float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  //Set previous animation time
+                int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;         // Set previous animation clip
+                float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  // Set previous animation time
 
-                meshPointer->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);    //Animation blending between Idle/Walk and Jump
+                meshPointer->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);
             }
-            else
+            else                                                    // Animation blending between Idle and Walk
             {
-                meshPointer->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);     //Animation blending between Idle and Walk
+                meshPointer->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);
             }
         }
     }

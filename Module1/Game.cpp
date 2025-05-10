@@ -126,11 +126,11 @@ void Game::update(
 
     updatePlayer(deltaTime, input);
 
-    PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  //Controller for the player
-    NPCControllerSystem(deltaTime, *entity_registry);   //Controller for npc
-    MovementSystem(deltaTime, *entity_registry);    //Movement for entities
-    //AnimationLogicSystem(deltaTime, *entity_registry);   //Animation blending
-    FSM(deltaTime, input, *entity_registry);      //Basic FSM for animation blending
+    PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  // Controller for the player
+    NPCControllerSystem(deltaTime, *entity_registry);                           // Controller for npc
+    MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
+    //AnimationLogicSystem(deltaTime, *entity_registry);                          // Animation blending
+    FSM(deltaTime, input, *entity_registry);                                    // Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
@@ -285,7 +285,7 @@ void Game::renderUI()
 {
     ImGui::Begin("Game Info");
 
-    ImGui::Text("Game time: %.1f seconds", ImGui::GetTime());   //Show the game time
+    ImGui::Text("Game time: %.1f seconds", ImGui::GetTime());                                           // Show the game time
 
     auto playerView = entity_registry->view<TransformComponent, PlayerControllerComponent>();
     for (auto entity : playerView)
@@ -294,12 +294,12 @@ void Game::renderUI()
         auto& playerController = playerView.get<PlayerControllerComponent>(entity);
 
         float playerScale = playerTransform.scalingVector.x;
-        if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))      //Adjust player scale
+        if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))                              // Adjust player scale
         {
             playerTransform.scalingVector = glm::vec3(playerScale);
         }
 
-        ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);   //Adjust player movement speed
+        ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);               // Adjust player movement speed
         break;
     }
 
@@ -309,7 +309,7 @@ void Game::renderUI()
         auto& npcController = npcView.get<NPCController>(entity);
 
         const char* behaviours[] = { "Random", "Follow player" };
-        ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  //Adjust npc behaviour
+        ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  // Adjust npc behaviour
     }
 
     auto animateView = entity_registry->view<AnimationComponent>();
@@ -317,21 +317,21 @@ void Game::renderUI()
     {
         auto& animation = animateView.get<AnimationComponent>(entity);
 
-        ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);     //Control blend factor in animation blend
-        ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);    //Control jump blend factor in animation blend
+        ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);                         // Control blend factor in animation blend
+        ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);                // Control jump blend factor in animation blend
 
         const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
         if (animation.currentState == AnimState::Jump)
         {
-            ImGui::Text(stateText[2]);  //Show Idle state
+            ImGui::Text(stateText[2]);                      // Show Jump state
         }
         if (animation.currentState == AnimState::Walk)
         {
-            ImGui::Text(stateText[1]);  //Show Walk state
+            ImGui::Text(stateText[1]);                      // Show Walk state
         }
         if (animation.currentState == AnimState::Idle)
         {
-            ImGui::Text(stateText[0]);  //Show Jump state
+            ImGui::Text(stateText[0]);                      // Show Idle state
         }
     }
     
@@ -342,7 +342,7 @@ void Game::renderUI()
 
         if (auto meshPointer = mesh.reference.lock())
         {
-            if (ImGui::Button("Bone gizmo ON"))     //Toggle bone visualization
+            if (ImGui::Button("Bone gizmo ON"))             // Toggle bone visualization
             {
                 mesh.drawSkeleton = true;
             }

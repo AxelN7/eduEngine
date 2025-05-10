@@ -16,13 +16,13 @@ void AnimationLogicSystem(float dt, entt::registry& registry)
 		animation.idleTime += animation.animationSpeed * dt;
 		animation.walkTime += animation.animationSpeed * dt;
 
-		if (playerController.isMoving)	//Blend up
+		if (playerController.isMoving)
 		{
-			animation.blendTimer += dt;
+			animation.blendTimer += dt;		// Blend up
 		}
-		else  //Blend down
+		else
 		{
-			animation.blendTimer -= dt;
+			animation.blendTimer -= dt;		// Blend down
 		}
 
 		animation.blendTimer = glm::clamp(animation.blendTimer, 0.0f, animation.blendDuration);
