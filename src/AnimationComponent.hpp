@@ -1,8 +1,15 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "AnimState.hpp"
+#include <vector>
 
-struct AnimationComponent
+struct AnimationClip		//Refactored		Added a new struct for containing each animationclip in a vector instead of having multiple primitive variables
+{
+	int clipIndex;
+	float animTime;
+};
+
+struct AnimationComponent		//Refactor		Primitive obsession, to many primitive variables, adding a new animation requires adding another variable. 
 {
 	float idleTime = 0.0f;							// Time for the Idle animation clip
 	float walkTime = 0.0f;							// Time for the Walk animation clip
@@ -21,4 +28,7 @@ struct AnimationComponent
 	AnimState currentState = AnimState::Idle;		// Current animation state
 	AnimState targetState = AnimState::Idle;		// State to transition to
 	AnimState previousState = AnimState::Idle;		// Previous animation state
+
+public:
+	std::vector<AnimationClip> animations;
 };

@@ -80,7 +80,12 @@ bool Game::init()
     entity_registry->emplace<MeshComponent>(playerEntity, characterMesh);
     entity_registry->emplace<PlayerControllerComponent>(playerEntity);
     entity_registry->emplace<LinearVelocityComponent>(playerEntity);
-    entity_registry->emplace<AnimationComponent>(playerEntity);
+    AnimationComponent animComp;
+    animComp.animations.push_back({ 0, 0.0f });     //T-pose
+    animComp.animations.push_back({ 1, 0.0f });     //Idle
+    animComp.animations.push_back({ 2, 0.0f });     //Walk
+    animComp.animations.push_back({ 3, 0.0f });     //Jump
+    entity_registry->emplace<AnimationComponent>(playerEntity, animComp);
 
     auto npcEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
@@ -129,7 +134,7 @@ void Game::update(
     PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  // Controller for the player
     NPCControllerSystem(deltaTime, *entity_registry);                           // Controller for npc
     MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
-    //AnimationLogicSystem(deltaTime, *entity_registry);                          // Animation blending
+    //AnimationLogicSystem(deltaTime, *entity_registry);                          // Animation blending             Refactor    Dead code, this method is no longer used and should be deleted
     FSM(deltaTime, input, *entity_registry);                                    // Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(

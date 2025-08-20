@@ -4,7 +4,7 @@
 #include "AnimationComponent.hpp"
 #include "PlayerControllerComponent.hpp"
 
-void AnimationLogicSystem(float dt, entt::registry& registry)
+void AnimationLogicSystem(float dt, entt::registry& registry)	//Refactor		Dead code, this method for Idle/Walk blend is no longer used since FSM handles all animation blends
 {
 	auto view = registry.view<AnimationComponent, PlayerControllerComponent>();
 
