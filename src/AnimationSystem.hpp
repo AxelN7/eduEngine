@@ -18,17 +18,17 @@ void AnimationSystem(entt::registry& registry)      //Refactored        Using th
 
         if (auto meshPointer = mesh.reference.lock())
         {
-            if (animation.currentState == AnimState::Jump)          // Animation blending between Idle/Walk and Jump
+            if (animation.currentState == AnimState::Jump)                                                                                                              // Animation blending between Idle/Walk and Jump
             {
-                //int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;         // Set previous animation clip
-                int prevAnimation = animation.previousState == AnimState::Walk ? animation.animations[2].clipIndex : animation.animations[1].clipIndex;
-                //float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;  // Set previous animation time
-                float prevTime = animation.previousState == AnimState::Walk ? animation.animations[2].animTime : animation.animations[1].animTime;
+                //int prevAnimation = animation.previousState == AnimState::Walk ? walkAnimation : idleAnimation;
+                //float prevTime = animation.previousState == AnimState::Walk ? animation.walkTime : animation.idleTime;
+                int prevAnimation = animation.previousState == AnimState::Walk ? animation.animations[2].clipIndex : animation.animations[1].clipIndex;                 // Set previous animation clip
+                float prevTime = animation.previousState == AnimState::Walk ? animation.animations[2].animTime : animation.animations[1].animTime;                      // Set previous animation time
 
                 //meshPointer->animateBlend(prevAnimation, jumpAnimation, prevTime, animation.jumpTimer, animation.jumpBlendFactor);
                 meshPointer->animateBlend(prevAnimation, animation.animations[3].clipIndex, prevTime, animation.animations[3].animTime, animation.jumpBlendFactor);
             }
-            else                                                    // Animation blending between Idle and Walk
+            else                                                                                                                                                        // Animation blending between Idle and Walk
             {
                 //meshPointer->animateBlend(idleAnimation, walkAnimation, animation.idleTime, animation.walkTime, animation.blendFactor);
                 meshPointer->animateBlend(animation.animations[1].clipIndex, animation.animations[2].clipIndex, animation.animations[1].animTime, animation.animations[2].animTime, animation.blendFactor);

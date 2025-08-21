@@ -39,7 +39,7 @@ void JumpBlend(float dt, auto& animation)
 		animation.jumpBlendTimer += dt;
 		animation.jumpBlendFactor = glm::clamp(animation.jumpBlendTimer / animation.blendDuration, 0.0f, 1.0f);
 
-		if (animation.animations[3].animTime >= animation.jumpDuration * 0.5f)					// Start blend down/out halfway
+		if (animation.animations[3].animTime >= animation.jumpDuration * 0.5f)		// Start blend down/out halfway
 		{
 			animation.jumpBlendOut = true;
 			animation.jumpBlendTimer = animation.blendDuration;
@@ -69,8 +69,8 @@ void FSM(float dt, InputManagerPtr input, entt::registry& registry)			//Refactor
 		auto& playerController = view.get<PlayerControllerComponent>(entity);
 
 		//animation.idleTime += animation.animationSpeed * dt;
-		animation.animations[1].animTime += animation.animationSpeed * dt;
 		//animation.walkTime += animation.animationSpeed * dt;
+		animation.animations[1].animTime += animation.animationSpeed * dt;
 		animation.animations[2].animTime += animation.animationSpeed * dt;
 
 		if (input->IsKeyPressed(Key::Space) && animation.currentState != AnimState::Jump)	// Check if jump

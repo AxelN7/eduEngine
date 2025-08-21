@@ -6,26 +6,26 @@
 
 void AnimationLogicSystem(float dt, entt::registry& registry)	//Refactor		Dead code, this method for Idle/Walk blend is no longer used since FSM handles all animation blends
 {
-	auto view = registry.view<AnimationComponent, PlayerControllerComponent>();
+	//auto view = registry.view<AnimationComponent, PlayerControllerComponent>();
 
-	for (auto entity : view)
-	{
-		auto& animation = view.get<AnimationComponent>(entity);
-		auto& playerController = view.get<PlayerControllerComponent>(entity);
+	//for (auto entity : view)
+	//{
+	//	auto& animation = view.get<AnimationComponent>(entity);
+	//	auto& playerController = view.get<PlayerControllerComponent>(entity);
 
-		animation.idleTime += animation.animationSpeed * dt;
-		animation.walkTime += animation.animationSpeed * dt;
+	//	animation.idleTime += animation.animationSpeed * dt;
+	//	animation.walkTime += animation.animationSpeed * dt;
 
-		if (playerController.isMoving)
-		{
-			animation.blendTimer += dt;		// Blend up
-		}
-		else
-		{
-			animation.blendTimer -= dt;		// Blend down
-		}
+	//	if (playerController.isMoving)
+	//	{
+	//		animation.blendTimer += dt;		// Blend up
+	//	}
+	//	else
+	//	{
+	//		animation.blendTimer -= dt;		// Blend down
+	//	}
 
-		animation.blendTimer = glm::clamp(animation.blendTimer, 0.0f, animation.blendDuration);
-		animation.blendFactor = animation.blendTimer / animation.blendDuration;
-	}
+	//	animation.blendTimer = glm::clamp(animation.blendTimer, 0.0f, animation.blendDuration);
+	//	animation.blendFactor = animation.blendTimer / animation.blendDuration;
+	//}
 }

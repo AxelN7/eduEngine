@@ -9,7 +9,7 @@
 #include "RenderableMesh.hpp"
 #include "ShapeRenderer.hpp"
 
-void RenderSystem(entt::registry& registry, eeng::ForwardRenderer& forwardRenderer, ShapeRendererPtr shapeRenderer)
+void RenderSystem(entt::registry& registry, eeng::ForwardRenderer& forwardRenderer, ShapeRendererPtr shapeRenderer)     //Refactor      SRP, move the debug visualization rendering to a seperate system so RenderSystem has only one reason to change
 {
 	auto view = registry.view<TransformComponent, MeshComponent>();
 
@@ -29,7 +29,7 @@ void RenderSystem(entt::registry& registry, eeng::ForwardRenderer& forwardRender
             float axisLen = 1.0f;
 
             // Draw bone visualization
-            if (mesh.drawSkeleton)
+            if (mesh.drawSkeleton)                                                                                      //Refactor      SRP, move to a new system handling debug visualization to adhere to SRP
             {
                 for (int i = 0; i < meshPointer->boneMatrices.size(); ++i)
                 {
