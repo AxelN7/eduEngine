@@ -6,6 +6,9 @@
 #include "Game.hpp"
 #include "TransformComponent.hpp"
 #include "MeshComponent.hpp"
+#include "MatrixComponent.hpp"
+#include "MatrixSystem.hpp"
+#include "DebugRenderSystem.hpp"
 #include "RenderSystem.hpp"
 #include "MovementSystem.hpp"
 #include "PlayerControllerComponent.hpp"
@@ -86,6 +89,7 @@ bool Game::init()
     animComp.animations.push_back({ 2, 0.0f });     //Walk
     animComp.animations.push_back({ 3, 0.0f });     //Jump
     entity_registry->emplace<AnimationComponent>(playerEntity, animComp);
+    entity_registry->emplace<MatrixComponent>(playerEntity);
 
     auto npcEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
@@ -96,6 +100,7 @@ bool Game::init()
     entity_registry->emplace<MeshComponent>(npcEntity, horseMesh);
     entity_registry->emplace<NPCController>(npcEntity);
     entity_registry->emplace<LinearVelocityComponent>(npcEntity);
+    entity_registry->emplace<MatrixComponent>(npcEntity);
 #endif
 #if 0
     // Eve 5.0.1 PACK FBX
@@ -131,10 +136,10 @@ void Game::update(
 
     updatePlayer(deltaTime, input);
 
+    MatrixSystem(*entity_registry);
     PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  // Controller for the player
     NPCControllerSystem(deltaTime, *entity_registry);                           // Controller for npc
     MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
-    //AnimationLogicSystem(deltaTime, *entity_registry);                          // Animation blending             Refactor    Dead code, this method is no longer used and should be deleted
     FSM(deltaTime, input, *entity_registry);                                    // Basic FSM for animation blending
 
     pointlight.pos = glm::vec3(
@@ -225,6 +230,7 @@ void Game::render(
     character_aabb1 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix1);*/
     AnimationSystem(*entity_registry);
     RenderSystem(*entity_registry, *forwardRenderer, shapeRenderer);
+    DebugRenderSystem(*entity_registry, shapeRenderer);
 
     // Character, instance 2
     characterMesh->animate(3, time * characterAnimSpeed);

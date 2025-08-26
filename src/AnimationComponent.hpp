@@ -11,13 +11,10 @@ struct AnimationClip		//Refactored		Added a new struct for containing each anima
 
 struct AnimationComponent		//Refactor		Primitive obsession, to many primitive variables, adding a new animation requires adding another variable. 
 {
-	//float idleTime = 0.0f;							// Time for the Idle animation clip
-	//float walkTime = 0.0f;							// Time for the Walk animation clip
 	float blendTimer = 0.0f;						// Progress timer for the blend
 	float blendFactor = 0.0f;						// Current blend factor
 	float blendDuration = 0.5f;						// Duration for a full blend
 
-	//float jumpTimer = 0.0f;							// Time elapsed in the Jump animation
 	float jumpDuration = 2.2f;						// Total duration of the Jump clip
 	float jumpBlendTimer = 0.0f;					// Progress of Jump blend
 	float jumpBlendFactor = 0.0f;					// Current Jump blend factor

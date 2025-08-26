@@ -31,7 +31,6 @@ void IdleWalkBlend(float dt, auto& animation, auto& playerController)
 
 void JumpBlend(float dt, auto& animation)
 {
-	//animation.jumpTimer += animation.animationSpeed * dt;
 	animation.animations[3].animTime += animation.animationSpeed * dt;
 
 	if (!animation.jumpBlendOut)															// Blend up/in
@@ -61,7 +60,6 @@ void SetJump(auto& animation)
 {
 	animation.previousState = animation.currentState;										// Save current state in previous state
 	animation.currentState = AnimState::Jump;												// Update current state
-	//animation.jumpTimer = 0.0f;
 	animation.animations[3].animTime = 0.0f;
 	animation.jumpBlendTimer = 0.0f;
 	animation.jumpBlendFactor = 0.0f;
@@ -79,8 +77,6 @@ void FSM(float dt, InputManagerPtr input, entt::registry& registry)			//Refactor
 		auto& animation = view.get<AnimationComponent>(entity);
 		auto& playerController = view.get<PlayerControllerComponent>(entity);
 
-		//animation.idleTime += animation.animationSpeed * dt;
-		//animation.walkTime += animation.animationSpeed * dt;
 		animation.animations[1].animTime += animation.animationSpeed * dt;
 		animation.animations[2].animTime += animation.animationSpeed * dt;
 
