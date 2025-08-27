@@ -1,13 +1,8 @@
 #pragma once
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include "TransformComponent.hpp"
 #include "MatrixComponent.hpp"
-#include "ForwardRenderer.hpp"
-#include "RenderableMesh.hpp"
-#include "ShapeRenderer.hpp"
 
 void MatrixSystem(entt::registry& registry)
 {

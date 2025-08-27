@@ -4,7 +4,7 @@
 #include "AnimationComponent.hpp"
 #include "MeshComponent.hpp"
 
-void AnimationSystem(entt::registry& registry)      //Refactored        Using the vector containing animation clips instead of primitive clip indexes
+void AnimationSystem(entt::registry& registry)
 {
     auto view = registry.view<AnimationComponent, MeshComponent>();
     for (auto entity : view)

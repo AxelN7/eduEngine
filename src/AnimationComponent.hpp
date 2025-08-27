@@ -3,13 +3,13 @@
 #include "AnimState.hpp"
 #include <vector>
 
-struct AnimationClip		//Refactored		Added a new struct for containing each animationclip in a vector instead of having multiple primitive variables
+struct AnimationClip
 {
 	int clipIndex;									// Index representing an animation clip
 	float animTime;									// Time for an animation clip
 };
 
-struct AnimationComponent		//Refactor		Primitive obsession, to many primitive variables, adding a new animation requires adding another variable. 
+struct AnimationComponent
 {
 	float blendTimer = 0.0f;						// Progress timer for the blend
 	float blendFactor = 0.0f;						// Current blend factor

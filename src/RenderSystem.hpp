@@ -1,15 +1,12 @@
 #pragma once
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include "MatrixComponent.hpp"
 #include "MeshComponent.hpp"
 #include "ForwardRenderer.hpp"
-#include "RenderableMesh.hpp"
 #include "ShapeRenderer.hpp"
 
-void RenderSystem(entt::registry& registry, eeng::ForwardRenderer& forwardRenderer, ShapeRendererPtr shapeRenderer)     //Refactored      SRP, move the debug visualization rendering to a seperate system so RenderSystem has only one reason to change
+void RenderSystem(entt::registry& registry, eeng::ForwardRenderer& forwardRenderer, ShapeRendererPtr shapeRenderer)
 {
 	auto view = registry.view<MatrixComponent, MeshComponent>();
 

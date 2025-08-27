@@ -1,12 +1,8 @@
 #pragma once
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include "MatrixComponent.hpp"
 #include "MeshComponent.hpp"
-#include "ForwardRenderer.hpp"
-#include "RenderableMesh.hpp"
 #include "ShapeRenderer.hpp"
 
 void DebugRenderSystem(entt::registry& registry, ShapeRendererPtr shapeRenderer)
@@ -23,7 +19,7 @@ void DebugRenderSystem(entt::registry& registry, ShapeRendererPtr shapeRenderer)
 			float axisLen = 1.0f;
 
             // Draw bone visualization
-            if (mesh.drawSkeleton)                                                                                      //Refactored      SRP, move to a new system handling debug visualization to adhere to SRP
+            if (mesh.drawSkeleton)
             {
                 for (int i = 0; i < meshPointer->boneMatrices.size(); ++i)
                 {

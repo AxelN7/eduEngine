@@ -18,9 +18,11 @@
 #include "NPCControllerSystem.hpp"
 #include "AnimationComponent.hpp"
 #include "AnimationSystem.hpp"
-#include "AnimationLogicSystem.hpp"
 #include "AnimState.hpp"
 #include "FSM.hpp"
+#include "Event.hpp"
+#include "Observer.hpp"
+#include "Source.hpp"
 
 bool Game::init()
 {
@@ -90,6 +92,7 @@ bool Game::init()
     animComp.animations.push_back({ 3, 0.0f });     //Jump
     entity_registry->emplace<AnimationComponent>(playerEntity, animComp);
     entity_registry->emplace<MatrixComponent>(playerEntity);
+    entity_registry->emplace<Source>(playerEntity, playerEntity);
 
     auto npcEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
@@ -136,7 +139,7 @@ void Game::update(
 
     updatePlayer(deltaTime, input);
 
-    MatrixSystem(*entity_registry);
+    MatrixSystem(*entity_registry);                                             // Compute matrix
     PlayerControllerSystem(input, *entity_registry, player.fwd, player.right);  // Controller for the player
     NPCControllerSystem(deltaTime, *entity_registry);                           // Controller for npc
     MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
