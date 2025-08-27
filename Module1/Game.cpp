@@ -23,6 +23,8 @@
 #include "Event.hpp"
 #include "Observer.hpp"
 #include "Source.hpp"
+#include "EventQueue.hpp"
+#include "GUISystem.hpp"
 
 bool Game::init()
 {
@@ -75,6 +77,9 @@ bool Game::init()
     characterMesh->load("assets/Amy/jump.fbx", true);
     // Remove root motion
     characterMesh->removeTranslationKeys("mixamorig:Hips");
+
+    eventQueue = std::make_shared<EventQueue>();
+    guiSystem = std::make_unique<GUISystem>(*entity_registry, *eventQueue);
 
     auto playerEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(playerEntity, TransformComponent{
@@ -144,6 +149,8 @@ void Game::update(
     NPCControllerSystem(deltaTime, *entity_registry);                           // Controller for npc
     MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
     FSM(deltaTime, input, *entity_registry);                                    // Basic FSM for animation blending
+
+    guiSystem->Update();
 
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
@@ -301,71 +308,72 @@ void Game::renderUI()
 
     ImGui::Text("Game time: %.1f seconds", ImGui::GetTime());                                           // Show the game time
 
-    auto playerView = entity_registry->view<TransformComponent, PlayerControllerComponent>();
-    for (auto entity : playerView)
-    {
-        auto& playerTransform = playerView.get<TransformComponent>(entity);
-        auto& playerController = playerView.get<PlayerControllerComponent>(entity);
+    guiSystem->Draw();
+    //auto playerView = entity_registry->view<TransformComponent, PlayerControllerComponent>();
+    //for (auto entity : playerView)
+    //{
+    //    auto& playerTransform = playerView.get<TransformComponent>(entity);
+    //    auto& playerController = playerView.get<PlayerControllerComponent>(entity);
 
-        float playerScale = playerTransform.scalingVector.x;
-        if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))                              // Adjust player scale
-        {
-            playerTransform.scalingVector = glm::vec3(playerScale);
-        }
+    //    float playerScale = playerTransform.scalingVector.x;
+    //    if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))                              // Adjust player scale
+    //    {
+    //        playerTransform.scalingVector = glm::vec3(playerScale);
+    //    }
 
-        ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);               // Adjust player movement speed
-        break;
-    }
+    //    ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);               // Adjust player movement speed
+    //    break;
+    //}
 
-    auto npcView = entity_registry->view<NPCController>();
-    for (auto entity : npcView)
-    {
-        auto& npcController = npcView.get<NPCController>(entity);
+    //auto npcView = entity_registry->view<NPCController>();
+    //for (auto entity : npcView)
+    //{
+    //    auto& npcController = npcView.get<NPCController>(entity);
 
-        const char* behaviours[] = { "Random", "Follow player" };
-        ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  // Adjust npc behaviour
-    }
+    //    const char* behaviours[] = { "Random", "Follow player" };
+    //    ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  // Adjust npc behaviour
+    //}
 
-    auto animateView = entity_registry->view<AnimationComponent>();
-    for (auto entity : animateView)
-    {
-        auto& animation = animateView.get<AnimationComponent>(entity);
+    //auto animateView = entity_registry->view<AnimationComponent>();
+    //for (auto entity : animateView)
+    //{
+    //    auto& animation = animateView.get<AnimationComponent>(entity);
 
-        ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);                         // Control blend factor in animation blend
-        ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);                // Control jump blend factor in animation blend
+    //    ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);                         // Control blend factor in animation blend
+    //    ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);                // Control jump blend factor in animation blend
 
-        const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
-        if (animation.currentState == AnimState::Jump)
-        {
-            ImGui::Text(stateText[2]);                      // Show Jump state
-        }
-        if (animation.currentState == AnimState::Walk)
-        {
-            ImGui::Text(stateText[1]);                      // Show Walk state
-        }
-        if (animation.currentState == AnimState::Idle)
-        {
-            ImGui::Text(stateText[0]);                      // Show Idle state
-        }
-    }
+    //    const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
+    //    if (animation.currentState == AnimState::Jump)
+    //    {
+    //        ImGui::Text(stateText[2]);                      // Show Jump state
+    //    }
+    //    if (animation.currentState == AnimState::Walk)
+    //    {
+    //        ImGui::Text(stateText[1]);                      // Show Walk state
+    //    }
+    //    if (animation.currentState == AnimState::Idle)
+    //    {
+    //        ImGui::Text(stateText[0]);                      // Show Idle state
+    //    }
+    //}
     
-    auto renderView = entity_registry->view<MeshComponent, PlayerControllerComponent>();
-    for (auto entity : renderView)
-    {
-        auto& mesh = renderView.get<MeshComponent>(entity);
+    //auto renderView = entity_registry->view<MeshComponent, PlayerControllerComponent>();
+    //for (auto entity : renderView)
+    //{
+    //    auto& mesh = renderView.get<MeshComponent>(entity);
 
-        if (auto meshPointer = mesh.reference.lock())
-        {
-            if (ImGui::Button("Bone gizmo ON"))             // Toggle bone visualization
-            {
-                mesh.drawSkeleton = true;
-            }
-            if (ImGui::Button("Bone gizmo OFF"))
-            {
-                mesh.drawSkeleton = false;
-            }
-        }
-    }
+    //    if (auto meshPointer = mesh.reference.lock())
+    //    {
+    //        if (ImGui::Button("Bone gizmo ON"))             // Toggle bone visualization
+    //        {
+    //            mesh.drawSkeleton = true;
+    //        }
+    //        if (ImGui::Button("Bone gizmo OFF"))
+    //        {
+    //            mesh.drawSkeleton = false;
+    //        }
+    //    }
+    //}
 
     ImGui::Text("Drawcall count %i", drawcallCount);
 

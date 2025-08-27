@@ -7,6 +7,8 @@
 #include "RenderableMesh.hpp"
 #include "ForwardRenderer.hpp"
 #include "ShapeRenderer.hpp"
+#include "EventQueue.hpp"
+#include "GUISystem.hpp"
 
 /// @brief A Game may hold, update and render 3D geometry and GUI elements
 class Game : public eeng::GameBase
@@ -49,6 +51,9 @@ private:
 
     // Entity registry - to use in labs
     std::shared_ptr<entt::registry> entity_registry;
+
+    std::shared_ptr<EventQueue> eventQueue;
+    std::unique_ptr<GUISystem> guiSystem;
 
     // Matrices for view, projection and viewport
     struct Matrices

@@ -72,5 +72,10 @@ public:
 		}
 		numberOfEventsInQueue = 0;							// Clear event queue after broadcasting
 	}
+
+	// Getter
+	std::uint8_t getNumberOfEventsInQueue() const { return numberOfEventsInQueue; }
+
+	const std::array<std::string, 256>& getQueue() const { return queuedEvents; }
 };
 #endif
