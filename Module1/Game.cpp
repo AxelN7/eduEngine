@@ -131,7 +131,7 @@ bool Game::init()
         glm::quat(glm::vec3(0.0f))
         });
     entity_registry->emplace<MeshComponent>(npcEntity, horseMesh);
-    //entity_registry->emplace<NPCController>(npcEntity);
+    entity_registry->emplace<NPCController>(npcEntity);
     entity_registry->emplace<LinearVelocityComponent>(npcEntity);
     entity_registry->emplace<MatrixComponent>(npcEntity);
     entity_registry->emplace<CollisionComponent>(npcEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(18.0f, 0.0f, 10.0f), { 2.0f, 2.0f, 2.0f } }, true);

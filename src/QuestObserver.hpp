@@ -5,6 +5,7 @@
 #include "QuestComponent.hpp"
 #include <entt/entt.hpp>
 #include <string>
+#include "NPCController.hpp"
 
 class QuestObserver : public Observer
 {
@@ -48,6 +49,21 @@ public:
 					quest.currentStep = QuestStep::QuestComplete;
 					std::string fedHorseEvent = "Quest: Horse fed! Quest complete!";
 					eventQueue.Enqueue(source, fedHorseEvent);
+				}
+			}
+
+			switch (quest.currentStep)				// Make the horse start moving when the quest has been completed
+			{
+			case QuestStep::QuestComplete:
+				if (quest.currentStep == QuestStep::QuestComplete)
+				{
+					auto horseView = registry.view<NPCController>();
+					for (auto horse : horseView)
+					{
+						auto& horseNPC = horseView.get<NPCController>(horse);
+						horseNPC.movementSpeed = 3.0f;
+						horseNPC.enabled = true;
+					}
 				}
 			}
 		}

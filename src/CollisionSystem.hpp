@@ -52,17 +52,13 @@ void CollisionSystem(entt::registry& registry, EventQueue& eventQueue)
 					registry.get<FeedHorseSource>(entity1).PlayerEntered();
 				}
 
-				if (entity1IsPlayer && registry.all_of<FoodTriggerSource>(entity2))
-					registry.get<FoodTriggerSource>(entity2).PlayerEntered();
+				if (entity1IsPlayer && registry.all_of<FoodTriggerSource>(entity2)) registry.get<FoodTriggerSource>(entity2).PlayerEntered();
 
-				if (entity1IsPlayer && registry.all_of<HorseTriggerSource>(entity2))
-					registry.get<HorseTriggerSource>(entity2).PlayerEntered();
+				if (entity1IsPlayer && registry.all_of<HorseTriggerSource>(entity2)) registry.get<HorseTriggerSource>(entity2).PlayerEntered();
 
-				if (entity2IsPlayer && registry.all_of<FoodTriggerSource>(entity1))
-					registry.get<FoodTriggerSource>(entity1).PlayerEntered();
+				if (entity2IsPlayer && registry.all_of<FoodTriggerSource>(entity1)) registry.get<FoodTriggerSource>(entity1).PlayerEntered();
 
-				if (entity2IsPlayer && registry.all_of<HorseTriggerSource>(entity1))
-					registry.get<HorseTriggerSource>(entity1).PlayerEntered();
+				if (entity2IsPlayer && registry.all_of<HorseTriggerSource>(entity1)) registry.get<HorseTriggerSource>(entity1).PlayerEntered();
 			}
 			else if (registry.all_of<RigidBodyComponent>(entity1) && registry.all_of<RigidBodyComponent>(entity2))
 			{
