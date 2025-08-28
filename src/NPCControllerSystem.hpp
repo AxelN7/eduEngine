@@ -20,7 +20,12 @@ void NPCControllerSystem(float dt, entt::registry& registry)
 
 		switch (npcController.behaviour)
 		{
-		case 0:		//NPC moves randomly
+		case 0:		//NPC stays idle
+		{
+			npcController.movementSpeed = 0.0f;
+			if (npcController.enabled) npcController.behaviour = 1;
+		}
+		case 1:		//NPC moves randomly
 		{
 			npcController.movementCooldown -= dt;
 
@@ -32,7 +37,7 @@ void NPCControllerSystem(float dt, entt::registry& registry)
 			}
 		}
 		break;
-		case 1:		//NPC follows the player
+		case 2:		//NPC follows the player
 		{
 			auto playerView = registry.view<PlayerControllerComponent, TransformComponent>();
 

@@ -6,6 +6,7 @@
 #include "AnimationComponent.hpp"
 #include "PlayerControllerComponent.hpp"
 #include "InputManager.hpp"
+#include "EventQueue.hpp"
 
 void IdleWalkBlend(float dt, auto& animation, auto& playerController)
 {

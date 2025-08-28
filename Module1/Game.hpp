@@ -9,6 +9,7 @@
 #include "ShapeRenderer.hpp"
 #include "EventQueue.hpp"
 #include "GUISystem.hpp"
+#include "QuestObserver.hpp"
 
 /// @brief A Game may hold, update and render 3D geometry and GUI elements
 class Game : public eeng::GameBase
@@ -54,6 +55,7 @@ private:
 
     std::shared_ptr<EventQueue> eventQueue;
     std::unique_ptr<GUISystem> guiSystem;
+    std::shared_ptr<QuestObserver> questObserver;
 
     // Matrices for view, projection and viewport
     struct Matrices
@@ -102,7 +104,7 @@ private:
     } player;
 
     // Game meshes
-    std::shared_ptr<eeng::RenderableMesh> grassMesh, horseMesh, characterMesh;
+    std::shared_ptr<eeng::RenderableMesh> grassMesh, horseMesh, characterMesh, crabMesh;
 
     // Game entity transformations
     glm::mat4 characterWorldMatrix1, characterWorldMatrix2, characterWorldMatrix3;

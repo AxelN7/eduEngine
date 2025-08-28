@@ -2,5 +2,5 @@
 
 enum class AnimState
 {
-	Idle, Walk, Jump	// Animation states for character
+	Idle, Walk, Jump, Feed	// Animation states for character
 };

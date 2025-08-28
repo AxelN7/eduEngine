@@ -20,6 +20,9 @@ struct AnimationComponent
 	float jumpBlendFactor = 0.0f;					// Current Jump blend factor
 	bool jumpBlendOut = false;						// Indicates if Jump is blending out
 
+	float feedDuration = 2.0f;
+	float stateTimer = 0.0f;
+
 	float animationSpeed = 1.0f;					// Speed multiplier for animation
 
 	AnimState currentState = AnimState::Idle;		// Current animation state

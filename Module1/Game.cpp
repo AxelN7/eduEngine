@@ -25,6 +25,17 @@
 #include "Source.hpp"
 #include "EventQueue.hpp"
 #include "GUISystem.hpp"
+#include "QuestComponent.hpp"
+#include "CollisionComponent.hpp"
+#include "CollisionSystem.hpp"
+#include "Sphere.hpp"
+#include "AABB.hpp"
+#include "FoodTriggerSource.hpp"
+#include "HorseTriggerSource.hpp"
+#include "FeedHorseSource.hpp"
+#include "QuestObserver.hpp"
+#include "QuestInputSystem.hpp"
+#include "EventHelpers.h"
 
 bool Game::init()
 {
@@ -50,6 +61,10 @@ bool Game::init()
     // Horse
     horseMesh = std::make_shared<eeng::RenderableMesh>();
     horseMesh->load("assets/Animals/Horse.fbx", false);
+
+    // Crab
+    crabMesh = std::make_shared<eeng::RenderableMesh>();
+    crabMesh->load("assets/Ultimate Platformer Pack/Enemies/Crab.fbx", false);
 
     // Character
     characterMesh = std::make_shared<eeng::RenderableMesh>();
@@ -79,6 +94,14 @@ bool Game::init()
     characterMesh->removeTranslationKeys("mixamorig:Hips");
 
     eventQueue = std::make_shared<EventQueue>();
+    questObserver = std::make_shared<QuestObserver>(*entity_registry, *eventQueue);
+
+    uint8_t questListenerId = eventQueue->RegisterListener(
+        [this](const QueuedEvent& event)
+        {
+            Event e = StringToEvent(event.eventString);
+            questObserver->OnNotify(event.source, e);
+        });
     guiSystem = std::make_unique<GUISystem>(*entity_registry, *eventQueue);
 
     auto playerEntity = entity_registry->create();
@@ -97,18 +120,51 @@ bool Game::init()
     animComp.animations.push_back({ 3, 0.0f });     //Jump
     entity_registry->emplace<AnimationComponent>(playerEntity, animComp);
     entity_registry->emplace<MatrixComponent>(playerEntity);
-    entity_registry->emplace<Source>(playerEntity, playerEntity);
+    entity_registry->emplace<QuestComponent>(playerEntity, QuestStep::FindFood);
+    entity_registry->emplace<CollisionComponent>(playerEntity, Sphere{ glm::vec3(0.0f), 0.5f }, AABB{ glm::vec3(0.0f), { 0.5f, 1.0f, 0.5f } }, false);
+    entity_registry->emplace<RigidBodyComponent>(playerEntity);
 
     auto npcEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(npcEntity, TransformComponent{
-        glm::vec3(3.0f, 0.0f, 0.0f),
+        glm::vec3(20.0f, 0.0f, 10.0f),
         glm::vec3(0.01f, 0.01f, 0.01f),
         glm::quat(glm::vec3(0.0f))
         });
     entity_registry->emplace<MeshComponent>(npcEntity, horseMesh);
-    entity_registry->emplace<NPCController>(npcEntity);
+    //entity_registry->emplace<NPCController>(npcEntity);
     entity_registry->emplace<LinearVelocityComponent>(npcEntity);
     entity_registry->emplace<MatrixComponent>(npcEntity);
+    entity_registry->emplace<CollisionComponent>(npcEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(20.0f, 0.0f, 10.0f), { 2.0f, 2.0f, 2.0f } }, true);
+    entity_registry->emplace<RigidBodyComponent>(npcEntity);
+    entity_registry->emplace<HorseTriggerSource>(npcEntity, npcEntity);
+    entity_registry->emplace<FeedHorseSource>(npcEntity, npcEntity);
+
+    auto foodEntity = entity_registry->create();
+    entity_registry->emplace<TransformComponent>(foodEntity, TransformComponent{
+        glm::vec3(-20.0f, 0.0f, 0.0f),
+        glm::vec3(0.01f, 0.01f, 0.01f),
+        glm::quat(glm::vec3(0.0f))
+        });
+    entity_registry->emplace<MeshComponent>(foodEntity, crabMesh);
+    entity_registry->emplace<MatrixComponent>(foodEntity);
+    entity_registry->emplace<CollisionComponent>(foodEntity, Sphere{ glm::vec3(-20.0f, 0.0f, 0.0f), 1.0f }, AABB{glm::vec3(-20.0f, 0.0f, 0.0f), { 0.5f, 0.5f, 0.5f } }, true);
+    entity_registry->emplace<RigidBodyComponent>(foodEntity);
+    entity_registry->emplace<FoodTriggerSource>(foodEntity, foodEntity);
+    
+    if (auto* foodTrigger = entity_registry->try_get<FoodTriggerSource>(foodEntity))
+    {
+        foodTrigger->AddObserver(questObserver.get());
+    }
+
+    if (auto* horseTrigger = entity_registry->try_get<HorseTriggerSource>(npcEntity))
+    {
+        horseTrigger->AddObserver(questObserver.get());
+    }
+
+    if (auto* feedSource = entity_registry->try_get<FeedHorseSource>(npcEntity))
+    {
+        feedSource->AddObserver(questObserver.get());
+    }
 #endif
 #if 0
     // Eve 5.0.1 PACK FBX
@@ -150,16 +206,13 @@ void Game::update(
     MovementSystem(deltaTime, *entity_registry);                                // Movement for entities
     FSM(deltaTime, input, *entity_registry);                                    // Basic FSM for animation blending
 
+    CollisionSystem(*entity_registry, *eventQueue);
+    QuestInputSystem(*entity_registry, input, *eventQueue);
     guiSystem->Update();
 
     pointlight.pos = glm::vec3(
         glm_aux::R(time * 0.1f, { 0.0f, 1.0f, 0.0f }) *
         glm::vec4(100.0f, 100.0f, 100.0f, 1.0f));
-
-    /*characterWorldMatrix1 = glm_aux::TRS(
-        player.pos,
-        0.0f, { 0, 1, 0 },
-        { 0.03f, 0.03f, 0.03f });*/
 
     characterWorldMatrix2 = glm_aux::TRS(
         { -3, 0, 0 },
@@ -234,11 +287,7 @@ void Game::render(
     forwardRenderer->renderMesh(horseMesh, horseWorldMatrix);
     horse_aabb = horseMesh->m_model_aabb.post_transform(horseWorldMatrix);
 
-    // Character, instance 1
-    /*characterMesh->animate(characterAnimIndex, time * characterAnimSpeed);
-    forwardRenderer->renderMesh(characterMesh, characterWorldMatrix1);
-    character_aabb1 = characterMesh->m_model_aabb.post_transform(characterWorldMatrix1);*/
-    AnimationSystem(*entity_registry);
+    AnimationSystem(*entity_registry, *eventQueue, time);
     RenderSystem(*entity_registry, *forwardRenderer, shapeRenderer);
     DebugRenderSystem(*entity_registry, shapeRenderer);
 
@@ -308,72 +357,7 @@ void Game::renderUI()
 
     ImGui::Text("Game time: %.1f seconds", ImGui::GetTime());                                           // Show the game time
 
-    guiSystem->Draw();
-    //auto playerView = entity_registry->view<TransformComponent, PlayerControllerComponent>();
-    //for (auto entity : playerView)
-    //{
-    //    auto& playerTransform = playerView.get<TransformComponent>(entity);
-    //    auto& playerController = playerView.get<PlayerControllerComponent>(entity);
-
-    //    float playerScale = playerTransform.scalingVector.x;
-    //    if (ImGui::SliderFloat("Player scale", &playerScale, 0.01f, 1.0f))                              // Adjust player scale
-    //    {
-    //        playerTransform.scalingVector = glm::vec3(playerScale);
-    //    }
-
-    //    ImGui::SliderFloat("Player speed", &playerController.movementSpeed, 0.1f, 50.0f);               // Adjust player movement speed
-    //    break;
-    //}
-
-    //auto npcView = entity_registry->view<NPCController>();
-    //for (auto entity : npcView)
-    //{
-    //    auto& npcController = npcView.get<NPCController>(entity);
-
-    //    const char* behaviours[] = { "Random", "Follow player" };
-    //    ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  // Adjust npc behaviour
-    //}
-
-    //auto animateView = entity_registry->view<AnimationComponent>();
-    //for (auto entity : animateView)
-    //{
-    //    auto& animation = animateView.get<AnimationComponent>(entity);
-
-    //    ImGui::SliderFloat("Blend factor", &animation.blendFactor, 0.0f, 1.0f);                         // Control blend factor in animation blend
-    //    ImGui::SliderFloat("Jump Blend factor", &animation.jumpBlendFactor, 0.0f, 1.0f);                // Control jump blend factor in animation blend
-
-    //    const char* stateText[] = { "Current animation state: Idle", "Current animation state: Walk", "Current animation state: Jump"};
-    //    if (animation.currentState == AnimState::Jump)
-    //    {
-    //        ImGui::Text(stateText[2]);                      // Show Jump state
-    //    }
-    //    if (animation.currentState == AnimState::Walk)
-    //    {
-    //        ImGui::Text(stateText[1]);                      // Show Walk state
-    //    }
-    //    if (animation.currentState == AnimState::Idle)
-    //    {
-    //        ImGui::Text(stateText[0]);                      // Show Idle state
-    //    }
-    //}
-    
-    //auto renderView = entity_registry->view<MeshComponent, PlayerControllerComponent>();
-    //for (auto entity : renderView)
-    //{
-    //    auto& mesh = renderView.get<MeshComponent>(entity);
-
-    //    if (auto meshPointer = mesh.reference.lock())
-    //    {
-    //        if (ImGui::Button("Bone gizmo ON"))             // Toggle bone visualization
-    //        {
-    //            mesh.drawSkeleton = true;
-    //        }
-    //        if (ImGui::Button("Bone gizmo OFF"))
-    //        {
-    //            mesh.drawSkeleton = false;
-    //        }
-    //    }
-    //}
+    guiSystem->Draw(shapeRenderer);
 
     ImGui::Text("Drawcall count %i", drawcallCount);
 

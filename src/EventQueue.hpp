@@ -8,12 +8,18 @@
 #ifndef DEBUG
 #define DEBUG
 
-using Listener = std::function<void(const std::string&)>;
+struct QueuedEvent
+{
+	entt::entity source;
+	std::string eventString;
+};
+
+using Listener = std::function<void(const QueuedEvent&)>;
 class EventQueue
 {
 private:
 	std::array<Listener, 256> listeners;					// Collection of listeners
-	std::array<std::string, 256> queuedEvents;				// The event queue
+	std::array<QueuedEvent, 256> queuedEvents;				// The event queue
 	std::uint8_t numberOfEventsInQueue;
 	std::uint8_t numberOfListeners;
 public:
@@ -43,7 +49,7 @@ public:
 		}
 	}
 
-	void Enqueue(std::string& event)
+	void Enqueue(entt::entity source, std::string& eventString)
 	{
 		if (numberOfEventsInQueue >= 256)
 		{
@@ -55,7 +61,7 @@ public:
 #endif
 		}
 
-		queuedEvents[numberOfEventsInQueue++] = event;
+		queuedEvents[numberOfEventsInQueue++] = { source, eventString };
 	}
 
 	void BroadcastAllEvents()
@@ -65,7 +71,8 @@ public:
 			const auto& event = queuedEvents[i];
 			for (int j = 0; j < numberOfListeners; ++j)
 			{
-				if (listeners[j]) {
+				if (listeners[j])
+				{
 					listeners[j](event);
 				}
 			}
@@ -76,6 +83,6 @@ public:
 	// Getter
 	std::uint8_t getNumberOfEventsInQueue() const { return numberOfEventsInQueue; }
 
-	const std::array<std::string, 256>& getQueue() const { return queuedEvents; }
+	const std::array<QueuedEvent, 256>& getQueue() const { return queuedEvents; }
 };
 #endif

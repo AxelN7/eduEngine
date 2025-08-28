@@ -3,8 +3,11 @@
 #include <entt/entt.hpp>
 #include "AnimationComponent.hpp"
 #include "MeshComponent.hpp"
+#include "FeedHorseSource.hpp"
+#include "EventQueue.hpp"
+#include <string>
 
-void AnimationSystem(entt::registry& registry)
+void AnimationSystem(entt::registry& registry, EventQueue& eventQueue, float dt)
 {
     auto view = registry.view<AnimationComponent, MeshComponent>();
     for (auto entity : view)
@@ -14,6 +17,35 @@ void AnimationSystem(entt::registry& registry)
 
         if (auto meshPointer = mesh.reference.lock())
         {
+            switch (animation.currentState)
+            {
+            case AnimState::Feed:
+                meshPointer->animate(animation.animations[4].clipIndex, animation.stateTimer);
+                animation.stateTimer -= dt;
+
+                if (animation.stateTimer <= 0.0f)
+                {
+                    animation.currentState = AnimState::Idle;
+
+                    auto horseView = registry.view<FeedHorseSource>();
+                    for (auto horse : horseView)
+                    {
+                        auto& source = registry.get<FeedHorseSource>(horse);
+                        if (source.pendingQuestComplete)
+                        {
+                            animation.currentState = AnimState::Jump;
+
+                            if (registry.all_of<NPCController>(horse))
+                            {
+                                registry.get<NPCController>(horse).enabled = true;
+                            }
+                            std::string eventString = "Quest: Horse fed! Quest complete!";
+                            eventQueue.Enqueue(horse, eventString);
+                        }
+                    }
+                }
+            }
+
             if (animation.currentState == AnimState::Jump)                                                                                                              // Animation blending between Idle/Walk and Jump
             {
                 int prevAnimation = animation.previousState == AnimState::Walk ? animation.animations[2].clipIndex : animation.animations[1].clipIndex;                 // Set previous animation clip

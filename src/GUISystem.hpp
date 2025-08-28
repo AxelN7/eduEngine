@@ -11,6 +11,8 @@
 #include "AnimState.hpp"
 #include "MeshComponent.hpp"
 #include <imgui.h>
+#include "ShapeRenderer.hpp"
+#include "CollisionComponent.hpp"
 
 
 class GUISystem
@@ -21,6 +23,7 @@ private:
 
 	std::vector<std::string> debugMessages;
 	bool showBoneGizmo = false;
+	bool showColliders = true;
 
 	void RenderPlayerControls()
 	{
@@ -48,7 +51,7 @@ private:
 		{
 			auto& npcController = view.get<NPCController>(entity);
 
-			const char* behaviours[] = { "Random", "Follow player" };
+			const char* behaviours[] = { "Stay idle", "Random", "Follow player"};
 			ImGui::Combo("NPC behaviour", &npcController.behaviour, behaviours, IM_ARRAYSIZE(behaviours));  // Adjust npc behaviour
 		}
 	}
@@ -97,17 +100,71 @@ private:
 					mesh.drawSkeleton = false;
 				}
 			}
+
+			if (ImGui::Button("Show Colliders and Triggers ON"))
+			{
+				showColliders = true;
+			}
+			if (ImGui::Button("Show Colliders and Triggers OFF"))
+			{
+				showColliders = false;
+			}
 		}
 	}
 
 	void ProcessEventQueue()
 	{
-		for (int i = 0; i < eventQueue.getNumberOfEventsInQueue(); ++i)
+		const auto& events = eventQueue.getQueue();
+		const auto numEvents = eventQueue.getNumberOfEventsInQueue();
+
+		for (int i = 0; i < numEvents; ++i)
 		{
-			debugMessages.push_back(eventQueue.getQueue()[i]);
+			debugMessages.push_back(events[i].eventString);
 		}
 
 		eventQueue.BroadcastAllEvents();
+	}
+
+	void DrawAABB(ShapeRendererPtr shapeRenderer)
+	{
+		if (showColliders)
+		{
+			auto view = registry.view<CollisionComponent>();
+			for (auto entity : view)
+			{
+				auto& collider = view.get<CollisionComponent>(entity);
+
+				glm::vec3 min = collider.boundingBox.center - glm::make_vec3(collider.boundingBox.halfWidths);
+				glm::vec3 max = collider.boundingBox.center + glm::make_vec3(collider.boundingBox.halfWidths);
+
+				ShapeRendering::Color4u color = collider.isTrigger
+					? ShapeRendering::Color4u{ 0xFF0000FF }			// Red color for triggers
+				: ShapeRendering::Color4u{ 0xFF00FF00 };		// Green color for colliders
+
+				shapeRenderer->push_states(color);
+				shapeRenderer->push_AABB(min, max);
+				shapeRenderer->pop_states<ShapeRendering::Color4u>();
+			}
+		}
+	}
+
+	void DrawDebugMessages()
+	{
+		ImGui::Begin("Quest messages");
+
+		if (ImGui::Button("Clear")) debugMessages.clear();
+
+		ImGui::BeginChild("ScrollingRegion", ImVec2(0, 200), true);
+		ImGui::Text("Quest: Find the food!");
+		for (const auto& message : debugMessages)
+		{
+			ImGui::TextWrapped("%s", message.c_str());
+		}
+
+		if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) ImGui::SetScrollHereY(1.0f);
+
+		ImGui::EndChild();
+		ImGui::End();
 	}
 
 public:
@@ -118,14 +175,15 @@ public:
 		ProcessEventQueue();
 	}
 
-	void Draw()
+	void Draw(ShapeRendererPtr shapeRenderer)
 	{
 		RenderPlayerControls();
 		RenderNPCControls();
 		RenderAnimationControls();
 		RenderDebugOverlays();
+		DrawAABB(shapeRenderer);
 
 		// Show debug messages
-		
+		DrawDebugMessages();
 	}
 };
