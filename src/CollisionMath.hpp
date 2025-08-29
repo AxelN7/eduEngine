@@ -59,14 +59,22 @@ namespace CollisionMath
 		return s;
 	}
 
-	AABB BuildAABBFromSphere(const Sphere& s)
+	AABB BuildAABBFromPoints(const glm::vec3 points[], int numPoints)
 	{
-		AABB ab;
-		ab.center = s.center;
+		auto minMaxVectors = FindMinMaxValues(points, numPoints);
 
-		for (int i = 0; i != 3; ++i)
+		glm::vec3 minPoint(points[minMaxVectors[0].x].x,
+						   points[minMaxVectors[1].x].y,
+						   points[minMaxVectors[2].x].z);
+		glm::vec3 maxPoint(points[minMaxVectors[0].y].x,
+			               points[minMaxVectors[1].y].y,
+			               points[minMaxVectors[2].y].z);
+
+		AABB ab;
+		ab.center = (minPoint + maxPoint) * 0.5f;
+		for (int i = 0; i < 3; ++i)
 		{
-			ab.halfWidths[i] = s.radius;
+			ab.halfWidths[i] = (maxPoint[i] - minPoint[i]) * 0.5f;
 		}
 		return ab;
 	}

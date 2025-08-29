@@ -36,6 +36,7 @@
 #include "QuestObserver.hpp"
 #include "QuestInputSystem.hpp"
 #include "EventHelpers.h"
+#include "CollisionMath.hpp"
 
 bool Game::init()
 {
@@ -121,7 +122,7 @@ bool Game::init()
     entity_registry->emplace<AnimationComponent>(playerEntity, animComp);
     entity_registry->emplace<MatrixComponent>(playerEntity);
     entity_registry->emplace<QuestComponent>(playerEntity, QuestStep::FindFood);
-    entity_registry->emplace<CollisionComponent>(playerEntity, Sphere{ glm::vec3(0.0f), 0.5f }, AABB{ glm::vec3(0.0f), { 0.5f, 1.0f, 0.5f } }, false);
+    entity_registry->emplace<CollisionComponent>(playerEntity, Sphere{ glm::vec3(0.0f), 0.5f }, AABB{glm::vec3(0.0f), {1.0f, 4.5f, 1.0f}}, false);
     entity_registry->emplace<RigidBodyComponent>(playerEntity);
 
     auto npcEntity = entity_registry->create();
@@ -134,15 +135,20 @@ bool Game::init()
     entity_registry->emplace<NPCController>(npcEntity);
     entity_registry->emplace<LinearVelocityComponent>(npcEntity);
     entity_registry->emplace<MatrixComponent>(npcEntity);
-    entity_registry->emplace<CollisionComponent>(npcEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(18.0f, 0.0f, 10.0f), { 2.0f, 2.0f, 2.0f } }, true);
+    entity_registry->emplace<CollisionComponent>(npcEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(20.0f, 0.0f, 10.0f), { 1.5f, 4.0f, 3.0f } }, false);
     entity_registry->emplace<RigidBodyComponent>(npcEntity);
-    entity_registry->emplace<HorseTriggerSource>(npcEntity, npcEntity);
-    entity_registry->emplace<FeedHorseSource>(npcEntity, npcEntity);
 
-    auto horseColliderEntity = entity_registry->create();
-    entity_registry->emplace<MatrixComponent>(horseColliderEntity);
-    entity_registry->emplace<CollisionComponent>(horseColliderEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(20.0f, 0.0f, 10.0f), { 1.5f, 1.5f, 1.5f } }, false);
-    entity_registry->emplace<RigidBodyComponent>(horseColliderEntity);
+    auto npcTriggerEntity = entity_registry->create();
+    entity_registry->emplace<TransformComponent>(npcTriggerEntity, TransformComponent{
+        glm::vec3(20.0f, 0.0f, 10.0f),
+        glm::vec3(0.01f, 0.01f, 0.01f),
+        glm::quat(glm::vec3(0.0f))
+        });
+    entity_registry->emplace<MatrixComponent>(npcTriggerEntity);
+    entity_registry->emplace<CollisionComponent>(npcTriggerEntity, Sphere{ glm::vec3(20.0f, 0.0f, 10.0f), 3.0f }, AABB{ glm::vec3(20.0f, 0.0f, 10.0f), { 2.0f, 2.0f, 2.0f } }, true);
+    entity_registry->emplace<RigidBodyComponent>(npcTriggerEntity);
+    entity_registry->emplace<HorseTriggerSource>(npcTriggerEntity, npcTriggerEntity);
+    entity_registry->emplace<FeedHorseSource>(npcTriggerEntity, npcTriggerEntity);
 
     auto foodEntity = entity_registry->create();
     entity_registry->emplace<TransformComponent>(foodEntity, TransformComponent{
@@ -152,26 +158,31 @@ bool Game::init()
         });
     entity_registry->emplace<MeshComponent>(foodEntity, crabMesh);
     entity_registry->emplace<MatrixComponent>(foodEntity);
-    entity_registry->emplace<CollisionComponent>(foodEntity, Sphere{ glm::vec3(-20.0f, 0.0f, 0.0f), 1.0f }, AABB{glm::vec3(-20.0f, 0.0f, 0.0f), { 1.5f, 0.5f, 1.5f } }, true);
+    entity_registry->emplace<CollisionComponent>(foodEntity, Sphere{ glm::vec3(-20.0f, 0.0f, 0.0f), 1.0f }, AABB{ glm::vec3(-20.0f, 0.0f, 0.0f), { 1.0f, 1.5f, 1.0f } }, false);
     entity_registry->emplace<RigidBodyComponent>(foodEntity);
-    entity_registry->emplace<FoodTriggerSource>(foodEntity, foodEntity);
 
-    auto foodColliderEntity = entity_registry->create();
-    entity_registry->emplace<MatrixComponent>(foodColliderEntity);
-    entity_registry->emplace<CollisionComponent>(foodColliderEntity, Sphere{ glm::vec3(-20.0f, 0.0f, 0.0f), 1.0f }, AABB{ glm::vec3(-20.0f, 0.0f, 0.0f), { 0.5f, 0.5f, 0.5f } }, false);
-    entity_registry->emplace<RigidBodyComponent>(foodColliderEntity);
+    auto foodTriggerEntity = entity_registry->create();
+    entity_registry->emplace<TransformComponent>(foodTriggerEntity, TransformComponent{
+        glm::vec3(-20.0f, 0.0f, 0.0f),
+        glm::vec3(0.01f, 0.01f, 0.01f),
+        glm::quat(glm::vec3(0.0f))
+        });
+    entity_registry->emplace<MatrixComponent>(foodTriggerEntity);
+    entity_registry->emplace<CollisionComponent>(foodTriggerEntity, Sphere{ glm::vec3(-20.0f, 0.0f, 0.0f), 1.0f }, AABB{ glm::vec3(-20.0f, 0.0f, 0.0f), { 1.5f, 0.5f, 1.5f } }, true);
+    entity_registry->emplace<RigidBodyComponent>(foodTriggerEntity);
+    entity_registry->emplace<FoodTriggerSource>(foodTriggerEntity, foodTriggerEntity);
     
-    if (auto* foodTrigger = entity_registry->try_get<FoodTriggerSource>(foodEntity))
+    if (auto* foodTrigger = entity_registry->try_get<FoodTriggerSource>(foodTriggerEntity))
     {
         foodTrigger->AddObserver(questObserver.get());
     }
 
-    if (auto* horseTrigger = entity_registry->try_get<HorseTriggerSource>(npcEntity))
+    if (auto* horseTrigger = entity_registry->try_get<HorseTriggerSource>(npcTriggerEntity))
     {
         horseTrigger->AddObserver(questObserver.get());
     }
 
-    if (auto* feedSource = entity_registry->try_get<FeedHorseSource>(npcEntity))
+    if (auto* feedSource = entity_registry->try_get<FeedHorseSource>(npcTriggerEntity))
     {
         feedSource->AddObserver(questObserver.get());
     }
