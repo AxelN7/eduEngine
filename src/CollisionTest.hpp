@@ -20,7 +20,7 @@ namespace CollisionTest
 		return std::abs(dist) <= s.radius;
 	}
 
-	bool TestAABBAABB(const AABB& a, const AABB& b)					// Check "Sphere" test along each axis
+	bool TestAABBAABB(const AABB& a, const AABB& b)					// Check similar test as with Sphere but along each axis
 	{
 		float centerDiff = std::abs(a.center[0] - b.center[0]);
 		float compoundedWidth = a.halfWidths[0] + b.halfWidths[0];

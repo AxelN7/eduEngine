@@ -8,6 +8,4 @@ enum class QuestStep
 struct QuestComponent
 {
 	QuestStep currentStep = QuestStep::FindFood;
-	bool foodCollected = false;
-	bool horseFed = false;
 };

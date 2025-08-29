@@ -21,9 +21,9 @@ public:
 		playerInside = false;
 	}
 
-	void TryFeedHorse(entt::registry& registry, EventQueue& eventQueue)
+	void TryFeedHorse(entt::registry& registry, EventQueue& eventQueue)		// Enqueue event only when the Player triggers the event inside Horse trigger
 	{
-		if (!playerInside || pendingQuestComplete) return;
+		if (!playerInside || pendingQuestComplete) return;					// Make sure it only enqueues the event once
 
 		pendingQuestComplete = true;
 

@@ -297,7 +297,7 @@ void Game::render(
     forwardRenderer->renderMesh(horseMesh, horseWorldMatrix);
     horse_aabb = horseMesh->m_model_aabb.post_transform(horseWorldMatrix);
 
-    AnimationSystem(*entity_registry, *eventQueue, time);
+    AnimationSystem(*entity_registry);
     RenderSystem(*entity_registry, *forwardRenderer, shapeRenderer);
     DebugRenderSystem(*entity_registry, shapeRenderer);
 
